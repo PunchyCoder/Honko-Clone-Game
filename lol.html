@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>LoL.Game</title>
+</head>
+
+<body>
+ 
+<h2 id="scoreBoard"> SCORE: <span id="score">0</span></h2>	
+<canvas id="canvas" width="600" height="500"> 
+<script>
+	var canvas;
+	var context;
+	var w;
+	var h;
+
+	window.onload = function(){
+		canvas = document.getElementById("canvas");
+		context = canvas.getContext("2d");
+
+		document.addEventListener("keydown", keyPressed);
+		document.addEventListener("keyup", keyReleased);
+		document.addEventListener("click", function(){alert("suck it!")});
+
+		w = canvas.width;
+		h = canvas.height;		
+
+		var framesPerSec = 40
+		setInterval(updateAll, 1000/framesPerSec)
+	}
+
+
+
+	var x = 300;
+	var y = 300;
+	var speed = 0;
+	var drivePower = 0.8;
+	const groundSpeedDecay = .64;
+	var score = document.getElementById("score");
+	var playerScore = 0;
+	const key_Left = 37;
+	const key_Up = 38;
+	const key_Right = 39;
+	const key_Down = 40;
+	const key_Space = 32; 
+
+	var keyHeld_Left = false;
+	var keyHeld_Up = false;
+	var keyHeld_Right = false;
+	var keyHeld_Down = false;
+
+	var gameOver = false;
+	var gameOverMessage = "YOU LOSE, BITCH!"
+
+	var coinSFX = new Audio();
+		coinSFX.src = "Pickup_Coin10.wav";
+
+	var loseSFX = new Audio();
+		loseSFX.src = "Explosion16.wav";
+
+	
+
+	// var coin = new Pickup();      -- -- MY ATTEMPT AT USING A CONSTRUCTOR FUNCTION ;)
+
+	// function Pickup(){
+	// 	this.x;
+	// 	this.y;
+	// 	this.draw = drawCircle("gold", this.x,this.y, 12); //insert a drawing function --TEST! :D
+	// 	this.collision = function(){
+	// 		if(x > this.x - 15 && 
+	// 	   x < this.x + 15 &&
+	// 	   y > this.y - 15 &&
+	// 	   y < this.y + 15){
+	// 	   	coinCreated = false
+	// 		};
+	// //	this.isGrabbed = false;
+	// 	};
+	// };
+
+	var coin = {
+		x: 100,
+		y: 100,
+		radius: 12,
+		isCollected: false,
+		score: 0,
+
+		draw: function(){
+			if(!coin.isCollected){     // draw now functions like update AND draw.. should maybe split up functions..
+
+			context.fillStyle = "yellow";
+			context.beginPath();
+			context.arc(coin.x,coin.y, coin.radius, 0,Math.PI*2, true);
+			context.fill();
+			//console.log(coin.x)
+			//console.log(coin.y)
+			} else{
+				coin.findNewPosition();         // TESTING
+			};
+		},
+		findNewPosition: function(){
+			this.x = Math.floor(Math.random()*w);
+			this.y = Math.floor(Math.random()*h);
+			console.log(this.x);
+			console.log(this.y);
+			coin.isCollected = false;              // set isCollected to false HERE INSTEAD.
+		},
+		checkForCollision: function(){
+			if(x + 12 > coin.x - coin.radius &&
+			   x - 12 < coin.x + coin.radius &&
+			   y + 12 > coin.y - coin.radius && 
+			   y - 12 < coin.y + coin.radius)
+			{
+				playerScore++;
+				score.innerHTML = playerScore;
+				coin.isCollected = true;
+				coinSFX.play();
+				coin.findNewPosition();					
+			}
+		}
+
+
+	};
+
+
+
+
+	function updateAll(){
+		moveBall();
+		checkForOutofbounds();
+		//scrollingCanvasLogic();
+		coin.checkForCollision();
+		drawAll();
+	};
+
+	function drawAll(){
+		if(gameOver == true){
+			drawGameOverScreen();		
+		}else{
+
+		drawRect("red", 0,0, canvas.width,canvas.height);
+		drawRect("black", 5,5, canvas.width-10,canvas.height-10)
+		coin.draw();
+		drawCircle("fuchsia", x,y, 15);
+		//writeMessage();
+		//drawCircle("yellow", w-100,h-100, 12);
+		};
+	};
+
+	function checkForOutofbounds(){
+		if(x > w){
+			loseSFX.play();
+			gameOver = true;
+			x = w/2;
+			y = h/2;
+		};
+		if(x < 1){
+			loseSFX.play();
+			gameOver = true;
+			x = w/2;
+			y = h/2;
+		};
+		if(y > h){
+			loseSFX.play();
+			gameOver = true;
+			x = w/2;
+			y = h/2;
+		};
+		if(y < 1){
+			loseSFX.play();
+			gameOver = true;
+			x = w/2;
+			y = h/2;
+		};
+	}
+
+	function scrollingCanvasLogic(){      // CURRENTLY NOT IN USE
+		if(x > w){
+			x = 1;
+		};
+		if(x < 1){
+			x = w;
+		};
+		if(y > h){
+			y = 1;
+		};
+		if(y < 1){
+			y = h;
+		};
+	}
+
+	function moveBall(){
+
+		speed *= groundSpeedDecay;
+
+		if(keyHeld_Left == true){
+			speed += drivePower;
+		};
+		if(keyHeld_Right == true){
+			speed += drivePower;
+		};
+		if(keyHeld_Up == true){
+			speed += drivePower;
+		};
+		if(keyHeld_Down == true){
+			speed += drivePower;
+		};
+		//if(coin.isCollected){
+		//	coin.isCollected = false
+		//};
+	};
+
+	function keyPressed(evt){
+		if(evt.keyCode == key_Left){
+			keyHeld_Left = true;
+			//console.log("KeyPressed Executes")
+		};
+		if(evt.keyCode == key_Right){
+			keyHeld_Right = true;
+			//console.log("KeyPressed Executes")
+		};
+		if(evt.keyCode == key_Up){
+			keyHeld_Up = true;
+			//console.log("KeyPressed Executes")
+		};
+		if(evt.keyCode == key_Down){
+			keyHeld_Down = true;
+			//console.log("KeyPressed Executes")
+		};
+		if(evt.keyCode == key_Space){
+			coin.isCollected = true;      //   <<<  seems to work: should reset Pos of coin..
+			gameOver = false;
+		};
+		if(evt.keyCode == 66){       // SPACEBAR displays Game Over Screen
+			gameOver = true;
+		}
+	};
+
+	function keyReleased(evt){
+		if(evt.keyCode == key_Left){
+			keyHeld_Left = false;
+			//console.log("KeyReleased Executes")
+		};
+		if(evt.keyCode == key_Right){
+			keyHeld_Right = false;
+			//console.log("KeyReleased Executes")
+		};
+		if(evt.keyCode == key_Up){
+			keyHeld_Up = false;
+			//console.log("KeyReleased Executes")
+		};
+		if(evt.keyCode == key_Down){
+			keyHeld_Down = false;
+			//console.log("KeyReleased Executes")
+		};
+		//if(evt.keyCode == key_Space){
+		//	coin.isCollected = true;              //  tested: not needed, so far
+		//};
+	};
+
+	
+
+	function drawGameOverScreen(){
+		drawRect("red", 0,0, w,h)
+		context.fillStyle = "black";
+		context.font = "20px Arial"
+		context.fillText(gameOverMessage, w/4,h/2);
+	}
+
+	function drawRect(color, topLeftX,topLeftY, bottomRightX,bottomRightY){
+		context.fillStyle = color;
+		context.fillRect(topLeftX,topLeftY, bottomRightX,bottomRightY);
+	};
+
+	function drawCircle(color, posX,posY, radius){
+		context.fillStyle = color;
+		context.beginPath();
+		context.arc(posX,posY, radius, 0,Math.PI*2, true);
+		context.fill();
+	};
+
+	function writeMessage(){
+		context.fillStyle = "white";
+		context.font = "30px Arial"
+		context.fillText("SCORE : ", 50, h - 80);
+	}
+
+	// function coinLogic(){                          //I wrote this before I wrote coin.isCollected, and it worked, but 
+	// 	if(coinCreated == true){                      //I forgot about it..  :( 
+	// 		coin.draw;
+	// 	} else {
+	// 		coin.x = Math.floor(Math.random()*canvas.width);
+	// 		coin.y = Math.floor(Math.random()*canvas.height);
+	// 		coinCreated = true;
+	// 	};
+
+	// };
+
+
+
+
+
+	
+
+</script>
+</body>
+</html>
