@@ -20,7 +20,7 @@
 
 		document.addEventListener("keydown", keyPressed);
 		document.addEventListener("keyup", keyReleased);
-		document.addEventListener("click", function(){alert("suck it!")});
+		//document.addEventListener("click", function(){alert("suck it!")});
 
 		w = canvas.width;
 		h = canvas.height;		
@@ -33,9 +33,9 @@
 
 	var x = 300;
 	var y = 300;
-	var speed = 0;
-	var drivePower = 0.8;
-	const groundSpeedDecay = .98;
+	var speed = 10;
+	//var drivePower = 0;
+	//const groundSpeedDecay = .99;
 	var score = document.getElementById("score");
 	var playerScore = 0;
 	const key_Left = 37;
@@ -57,6 +57,39 @@
 
 	var loseSFX = new Audio();
 		loseSFX.src = "Explosion16.wav";
+
+	var direction = {
+		up: 1,
+		right: 2,
+		down: 3,
+		left: 4
+	}
+
+	var player = {
+		x: 300,
+		y: 300,
+		speed: 10,
+		face: direction.up,
+		draw: function(){
+			drawCircle("fuchsia", this.x,this.y, 15);
+		}
+	}	
+
+	var bullets = {
+		x: 0,
+		y: 0,
+		chamber:[false,false,true,false,false],
+		pathDirection: player.face,
+		shoot: null,
+		findLocation: function(x,y,face){
+			this.x = player.x;
+			this.y = player.y;
+			this.direction = player.face;
+		},
+		draw: function() {
+			drawRect("orange", this.x,this.y, this.x+5,this.y+5)
+		},
+	}
 
 	
 
@@ -83,7 +116,6 @@
 		radius: 12,
 		isCollected: false,
 		score: 0,
-
 		draw: function(){
 			if(!coin.isCollected){     // draw now functions like update AND draw.. should maybe split up functions..
 
@@ -94,7 +126,7 @@
 			//console.log(coin.x)
 			//console.log(coin.y)
 			} else{
-				coin.findNewPosition();         // TESTING
+				this.findNewPosition();         // TESTING
 			};
 		},
 		findNewPosition: function(){
@@ -102,19 +134,19 @@
 			this.y = Math.floor(Math.random()*h);
 			console.log(this.x);
 			console.log(this.y);
-			coin.isCollected = false;              // set isCollected to false HERE INSTEAD.
+			this.isCollected = false;              // set isCollected to false HERE INSTEAD.
 		},
 		checkForCollision: function(){
-			if(x + 12 > coin.x - coin.radius &&
-			   x - 12 < coin.x + coin.radius &&
-			   y + 12 > coin.y - coin.radius && 
-			   y - 12 < coin.y + coin.radius)
+			if(player.x + 12 > this.x - this.radius &&
+			   player.x - 12 < this.x + this.radius &&
+			   player.y + 12 > this.y - this.radius && 
+			   player.y - 12 < this.y + this.radius)
 			{
 				playerScore++;
 				score.innerHTML = playerScore;
-				coin.isCollected = true;
+				this.isCollected = true;
 				coinSFX.play();
-				coin.findNewPosition();					
+				this.findNewPosition();					
 			}
 		}
 
@@ -140,37 +172,54 @@
 		drawRect("red", 0,0, canvas.width,canvas.height);
 		drawRect("black", 5,5, canvas.width-10,canvas.height-10)
 		coin.draw();
-		drawCircle("fuchsia", x,y, 15);
+		player.draw();
 		//writeMessage();
 		//drawCircle("yellow", w-100,h-100, 12);
 		};
 	};
 
+	function shooting(){
+		// check if bullet is already being fired (only one bullet at a time)
+		for(var i = 0; i < bullets.chamber.length; i++){
+			if(bullets.chamber[i] == true){
+				console.log(i)
+				console.log(bullets.chamber[i]);
+				bullets.chamber[i] = false;
+				return true;
+			}
+		}
+		// if(button z pressed){
+			//shotFired = true
+			//find path of bullet
+			//move bullet
+			//draw bullet
+			// 
+		//}
+		
+	}
+
 	function checkForOutofbounds(){
-		if(x > w){
-			loseSFX.play();
-			gameOver = true;
-			x = w/2;
-			y = h/2;
+		if(player.x > w){
+			newGame();
 		};
-		if(x < 1){
-			loseSFX.play();
-			gameOver = true;
-			x = w/2;
-			y = h/2;
+		if(player.x < 1){
+			newGame();
 		};
-		if(y > h){
-			loseSFX.play();
-			gameOver = true;
-			x = w/2;
-			y = h/2;
+		if(player.y > h){
+			newGame();
 		};
-		if(y < 1){
-			loseSFX.play();
-			gameOver = true;
-			x = w/2;
-			y = h/2;
+		if(player.y < 1){
+			newGame();
 		};
+	}
+
+	function newGame(){
+		loseSFX.play();
+		gameOver = true;
+		playerScore = 0;
+		score.innerHTML = playerScore;
+		player.x = w/2;
+		player.y = h/2;
 	}
 
 	function scrollingCanvasLogic(){      // CURRENTLY NOT IN USE
@@ -190,19 +239,30 @@
 
 	function moveBall(){
 
-		speed *= groundSpeedDecay;
+	 
 
 		if(keyHeld_Left == true){
-			speed += drivePower;
+			player.facing = "left";
+			player.x -= speed;
+			console.log( "moveBall")
 		};
+
 		if(keyHeld_Right == true){
-			speed += drivePower;
+			player.facing = "right";
+			player.x += speed;
+			console.log( "moveBall")
 		};
+
 		if(keyHeld_Up == true){
-			speed += drivePower;
+			player.facing = "up";
+			player.y -= speed;
+			console.log( "moveBall")
 		};
+
 		if(keyHeld_Down == true){
-			speed += drivePower;
+			player.facing = "down";
+			player.y += speed;
+			console.log( "moveBall")
 		};
 		//if(coin.isCollected){
 		//	coin.isCollected = false
@@ -212,19 +272,19 @@
 	function keyPressed(evt){
 		if(evt.keyCode == key_Left){
 			keyHeld_Left = true;
-			//console.log("KeyPressed Executes")
+			console.log("KeyPressed Executes")
 		};
 		if(evt.keyCode == key_Right){
 			keyHeld_Right = true;
-			//console.log("KeyPressed Executes")
+			console.log("KeyPressed Executes")
 		};
 		if(evt.keyCode == key_Up){
 			keyHeld_Up = true;
-			//console.log("KeyPressed Executes")
+			console.log("KeyPressed Executes")
 		};
 		if(evt.keyCode == key_Down){
 			keyHeld_Down = true;
-			//console.log("KeyPressed Executes")
+			console.log("KeyPressed Executes")
 		};
 		if(evt.keyCode == key_Space){
 			coin.isCollected = true;      //   <<<  seems to work: should reset Pos of coin..
@@ -238,19 +298,19 @@
 	function keyReleased(evt){
 		if(evt.keyCode == key_Left){
 			keyHeld_Left = false;
-			//console.log("KeyReleased Executes")
+			console.log("KeyReleased Executes")
 		};
 		if(evt.keyCode == key_Right){
 			keyHeld_Right = false;
-			//console.log("KeyReleased Executes")
+			console.log("KeyReleased Executes")
 		};
 		if(evt.keyCode == key_Up){
 			keyHeld_Up = false;
-			//console.log("KeyReleased Executes")
+			console.log("KeyReleased Executes")
 		};
 		if(evt.keyCode == key_Down){
 			keyHeld_Down = false;
-			//console.log("KeyReleased Executes")
+			console.log("KeyReleased Executes")
 		};
 		//if(evt.keyCode == key_Space){
 		//	coin.isCollected = true;              //  tested: not needed, so far
